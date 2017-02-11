@@ -4,30 +4,36 @@ intro = """Hello! Welcome to Pentago.
 Move command: board/space board rotation.
 Like this 3/1 3r\n"""
 board = [[], [], [], []]
+boardTotal = []
 for z in range(4):
     board[z] = ['.' for x in range(9)]
 
-#easier way to do this?
 def printBoard():
+    global board, boardTotal
+    boardTotal = []
     boardPrint = []
     boardPrint.append('Pantego - - -\n')
     for row in range(0, 3):
         for col in range(0, 3):
             boardPrint.append(board[0][row * 3 + col])
+            boardTotal.append(board[0][row * 3 + col])
             boardPrint.append(' ')
         boardPrint.append('| ')
         for col in range(0, 3):
             boardPrint.append(board[1][row * 3 + col])
+            boardTotal.append(board[1][row * 3 + col])
             boardPrint.append(' ')
         boardPrint.append('\n')
     boardPrint.append('- - - + - - -\n')
     for row in range(0, 3):
         for col in range(0, 3):
             boardPrint.append(board[2][row * 3 + col])
+            boardTotal.append(board[2][row * 3 + col])
             boardPrint.append(' ')
         boardPrint.append('| ')
         for col in range(0, 3):
             boardPrint.append(board[3][row * 3 + col])
+            boardTotal.append(board[3][row * 3 + col])
             boardPrint.append(' ')
         boardPrint.append('\n')
     boardPrint.append('- - - + - - -')
@@ -37,9 +43,8 @@ def printBoard():
 def makeMove(move, turn):
     add = move.split(' ')[0]
     rotate = move.split(' ')[1]
-    if(turn == True):
-        turn = 'w'
-    else:
+    turn = 'w'
+    if(turn == False):
         turn = 'b'
 
     if (board[int(add[0]) - 1][int(add[2]) - 1] == '.'):
@@ -82,9 +87,13 @@ def rotateBoard(number, direction):
     for count in range(len(end)):
         board[number][count] = end[count]
 
-def checkForEnd():
-    global board
+def checkForEnd(turn):
+    global boardTotal
+    print boardTotal
     matchFound = False
+    turnSymbol = 'w'
+    if (turn == False):
+        turnSymbol = 'b'
 
     return matchFound
 
@@ -96,8 +105,6 @@ def main():
     printBoard()
 
     while(game_end == False):
-        game_end = checkForEnd()
-
         nextMove = raw_input("What would you like to do? ")
         if (nextMove.lower() == "exit" or nextMove.lower() == "end"):
             game_end = True
@@ -107,14 +114,19 @@ def main():
             makeMove("1/3 4l", True)
             makeMove("2/1 4l", True)
             makeMove("2/2 4l", True)
-            print board
+            makeMove("3/8 4n", False)
+            makeMove("3/9 4n", False)
+            makeMove("4/7 4n", False)
+            makeMove("4/8 4n", False)
+            makeMove("4/9 4n", False)
             printBoard()
-        if (re.match("[1-4]/[1-9] [1-4][rl]", nextMove.lower())):
+        if (re.match("[1-4]/[1-9] [1-4][rln]", nextMove.lower())):
             moveValid = makeMove(nextMove, turn)
             if (moveValid == True):
                 printBoard()
             else:
                 nextMove = raw_input("Error, try again: ")
+        game_end = checkForEnd(turn)
         turn = not turn
 
 main()
