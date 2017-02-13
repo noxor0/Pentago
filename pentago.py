@@ -1,5 +1,6 @@
 import sys
 import re
+import os
 intro = """Hello! Welcome to Pentago.
 Move command: board/space board rotation.
 Like this 3/1 3r\n"""
@@ -118,9 +119,10 @@ def main():
     print intro
     game_end = False
     turn = True
-    printBoard()
 
     while(game_end == False):
+        os.system('clear')
+        printBoard()
         nextMove = raw_input("What would you like to do? ")
         if (nextMove.lower() == "exit" or nextMove.lower() == "end"):
             sys.exit("Bye Bye")
@@ -131,16 +133,10 @@ def main():
             makeMove("3/5 4n", True)
             makeMove("4/5 4n", True)
             makeMove("4/8 4n", True)
-            # makeMove("3/8 4n", False)
-            # makeMove("3/9 4n", False)
-            # makeMove("4/7 4n", False)
-            # makeMove("4/8 4n", False)
-            # makeMove("4/9 4n", False)
             printBoard()
         if (re.match("[1-4]/[1-9] [1-4][rln]", nextMove.lower())):
             moveValid = makeMove(nextMove, turn)
             if (moveValid == True):
-                printBoard()
                 turn = not turn
             else:
                 nextMove = raw_input("Error, try again: ")
