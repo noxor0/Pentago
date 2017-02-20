@@ -34,8 +34,8 @@ class node():
         for boardNum in range(4):
             for spot in range(9):
                 if (self.boardState[boardNum][spot] == '.'):
-                    boardNumStr = str(boardNum)
-                    spotStr = str(spot)
+                    boardNumStr = str(boardNum + 1)
+                    spotStr = str(spot + 1)
                     openMoves.append(''.join([boardNumStr, '/' ,spotStr]))
 
         for rotPair in rotations:
@@ -49,7 +49,7 @@ class node():
         self.move = ''.join([move, ' ', rot])
         boardCpy = deepcopy(self.boardState)
         #make move
-        boardCpy[int(move[0])][int(move[2])] = 'b'
+        boardCpy[int(move[0]) - 1][int(move[2]) - 1] = 'b'
         #start rotating
         start = boardCpy[int(rot[0])]
         end = []
@@ -172,7 +172,7 @@ def checkForEnd():
                     count += 1
                     prevCol = pos5InRow % 6
                     pos5InRow += direction
-                    if (pos5InRow > 36 or pos5InRow < 0):
+                    if (pos5InRow > 35 or pos5InRow < 0):
                         break
                     if (count == 5):
                         print "you win!"
