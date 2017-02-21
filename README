@@ -1,0 +1,5 @@
+#Pentago with AI
+
+A reconstruction of the popular board game, Pentago
+
+Has an AI that uses Alpha-Beta pruning on a Minimax tree  to chose the best step.

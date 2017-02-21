@@ -185,13 +185,13 @@ def main():
     game_end = False
     turn = True
     while(game_end == False):
-        printBoard()
         if (turn == False):
             node0 = node(board, level=0)
             makeMove(node0.determineMove(), turn)
             print "Maximillion moved", node0.determineMove()
             turn = not turn
         else:
+            printBoard()
             nextMove = raw_input("What would you like to do? ")
             if (nextMove.lower() == "exit" or nextMove.lower() == "end"):
                 sys.exit("Bye Bye")
