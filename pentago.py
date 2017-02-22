@@ -13,12 +13,13 @@ for z in range(4):
     board[z] = ['.' for x in range(9)]
 
 class node():
-    def __init__(self, boardState, level):
+    def __init__(self, boardState, theMove, level):
         self.boardState = list(boardState)
-        # print "BS", boardState
-        self.value = 0
-        self.move = None
+        # self.value = self.heuristic()
+        self.value = 1
+        self.move = theMove
         self.level = level
+        self.turn = False
         self.parent = None
         self.nextTurns = []
         self.nextNodes = []
@@ -26,10 +27,46 @@ class node():
             self.getNext()
 
     def determineMove(self):
-         return self.move
+        newMove = self.move
+        valueToBeat = -1000
+        for nodeN in self.nextNodes:
+            if(nodeN.value > valueToBeat):
+                valueToBeat = nodeN.value
+                newMove = nodeN.move
+        return newMove
+
+    def heuristic(self):
+        score = 0
+        possibleDir = [3, 1, -2, 4]
+        for boardSec in self.boardState:
+            for cellNum in range(9):
+                if(boardSec[cellNum] != '.'):
+                    for direction in possibleDir:
+                        turnSymbol = boardSec[cellNum]
+                        count = 0
+                        pos3InRow = cellNum
+                        prevCol = pos3InRow % 3
+                        while(boardTotal[pos3InRow] == turnSymbol):
+                            if (prevCol > pos3InRow % 3):
+                                break
+                            count += 1
+                            if (turnSymbol == 'b'):
+                                score += 2
+                            else:
+                                score += -2
+                            prevCol = pos3InRow % 3
+                            pos3InRow += direction
+                            if (pos3InRow > 8 or pos3InRow < 0):
+                                break
+                            if (count == 3):
+                                if (turnSymbol == 'b'):
+                                    score += 10
+                                else:
+                                    score += -10
+        return score
 
     def getNext(self):
-        rotations = ["0l", "0r", "1l", "1r", "2l", "2r", "3l", "3r"]
+        rotations = ["1l", "1r", "2l", "2r", "3l", "3r", "4l", "4r",]
         openMoves = []
         for boardNum in range(4):
             for spot in range(9):
@@ -41,17 +78,15 @@ class node():
         for rotPair in rotations:
             for possMoves in openMoves:
                 self.tempMove(possMoves, rotPair)
-                b = 1
-
-        return None
 
     def tempMove(self, move, rot):
-        self.move = ''.join([move, ' ', rot])
+        theMove = ''.join([move, ' ', rot])
+        self.move = theMove
         boardCpy = deepcopy(self.boardState)
         #make move
         boardCpy[int(move[0]) - 1][int(move[2]) - 1] = 'b'
         #start rotating
-        start = boardCpy[int(rot[0])]
+        start = boardCpy[int(rot[0]) - 1]
         end = []
         #Right, CW
         if (rot[1] == 'r'):
@@ -67,14 +102,11 @@ class node():
                 end.append(start[col + 6])
 
         for count in range(len(end)):
-            boardCpy[int(rot[0])][count] = end[count]
+            boardCpy[int(rot[0]) - 1][count] = end[count]
 
         if(boardCpy not in self.nextTurns):
-            # boardCpy.append(rot)
-            self.nextNodes.append(node(boardCpy, level=self.level+1))
+            self.nextNodes.append(node(boardCpy, theMove, self.level+1))
             self.nextTurns.append(boardCpy)
-            # print boardCpy
-
 
 def printBoard():
     global board, boardTotal
@@ -159,12 +191,12 @@ def checkForEnd():
     #Possible directions to win
     #vert +6 | hori +1 - rdia +5 / ldia -7 \
     possibleDir = [6, 1, -5, 7]
-    for cellNumb in range(36):
-        if(boardTotal[cellNumb] != '.'):
+    for cellNum in range(36):
+        if(boardTotal[cellNum] != '.'):
             for direction in possibleDir:
-                turnSymbol = boardTotal[cellNumb]
+                turnSymbol = boardTotal[cellNum]
                 count = 0
-                pos5InRow = cellNumb
+                pos5InRow = cellNum
                 prevCol = pos5InRow % 6
                 while(boardTotal[pos5InRow] == turnSymbol):
                     if (prevCol > pos5InRow % 6):
@@ -185,18 +217,18 @@ def main():
     game_end = False
     turn = True
     while(game_end == False):
+        printBoard()
         if (turn == False):
-            node0 = node(board, level=0)
+            node0 = node(board, "0/0 1n", 0)
             makeMove(node0.determineMove(), turn)
             print "Maximillion moved", node0.determineMove()
             turn = not turn
         else:
-            printBoard()
             nextMove = raw_input("What would you like to do? ")
             if (nextMove.lower() == "exit" or nextMove.lower() == "end"):
                 sys.exit("Bye Bye")
             if(nextMove.lower() == "test"):
-                node0 = node(board, level=0)
+                node0 = node(board, "2/4 3n", 0)
             if (nextMove.lower() == "debug"):
                 makeMove("1/6 4n", False)
                 makeMove("1/5 4n", False)
@@ -206,6 +238,7 @@ def main():
                 makeMove("4/8 4n", True)
                 printBoard()
             if (re.match("[1-4]/[1-9] [1-4][rln]", nextMove.lower())):
+                print nextMove
                 moveValid = makeMove(nextMove, turn)
                 if (moveValid == True):
                     turn = not turn
