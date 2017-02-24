@@ -13,27 +13,28 @@ for z in range(4):
     board[z] = ['.' for x in range(9)]
 
 class node():
-    def __init__(self, boardState, theMove, level):
-        self.boardState = list(boardState)
-        # self.value = self.heuristic()
+    def __init__(self, theBoardState, theMove, theLevel, theTurn, theParent):
+        self.boardState = list(theBoardState)
         self.value = 1
+        self.turn = theTurn
         self.move = theMove
-        self.level = level
-        self.turn = False
-        self.parent = None
+        self.level = theLevel
+        self.parent = theParent
         self.nextTurns = []
         self.nextNodes = []
-        if (level < 1):
+        if (self.level < 1):
             self.getNext()
+        else:
+            self.value = self.heuristic()
 
     def determineMove(self):
-        newMove = self.move
-        valueToBeat = -1000
-        for nodeN in self.nextNodes:
-            if(nodeN.value > valueToBeat):
-                valueToBeat = nodeN.value
-                newMove = nodeN.move
-        return newMove
+        idealValue = self.minimaxMove()
+        return idealValue
+
+    def minimaxMove(self):
+        # https://en.wikipedia.org/wiki/Minimax
+        if (self.level == 0):
+            return self
 
     def heuristic(self):
         score = 0
@@ -77,35 +78,39 @@ class node():
 
         for rotPair in rotations:
             for possMoves in openMoves:
-                self.tempMove(possMoves, rotPair)
+                self.tempMove(possMoves, rotPair, self.turn)
 
-    def tempMove(self, move, rot):
-        theMove = ''.join([move, ' ', rot])
+    def tempMove(self, thePlace, theRot, theTurn):
+        theMove = ''.join([thePlace, ' ', theRot])
         self.move = theMove
         boardCpy = deepcopy(self.boardState)
         #make move
-        boardCpy[int(move[0]) - 1][int(move[2]) - 1] = 'b'
+        if (theTurn == False):
+            boardCpy[int(thePlace[0]) - 1][int(thePlace[2]) - 1] = 'b'
+        else:
+            boardCpy[int(thePlace[0]) - 1][int(thePlace[2]) - 1] = 'w'
         #start rotating
-        start = boardCpy[int(rot[0]) - 1]
+        start = boardCpy[int(theRot[0]) - 1]
         end = []
         #Right, CW
-        if (rot[1] == 'r'):
+        if (theRot[1] == 'r'):
             for col in range(3):
                 end.append(start[col + 6])
                 end.append(start[col + 3])
                 end.append(start[col + 0])
         #Left, CCW
-        if (rot[1] == 'l'):
+        if (theRot[1] == 'l'):
             for col in range(2, -1, -1):
                 end.append(start[col + 0])
                 end.append(start[col + 3])
                 end.append(start[col + 6])
 
         for count in range(len(end)):
-            boardCpy[int(rot[0]) - 1][count] = end[count]
+            boardCpy[int(theRot[0]) - 1][count] = end[count]
 
         if(boardCpy not in self.nextTurns):
-            self.nextNodes.append(node(boardCpy, theMove, self.level+1))
+            self.nextNodes.append(node(boardCpy, theMove, self.level+1,
+                                       not self.turn, self))
             self.nextTurns.append(boardCpy)
 
 def printBoard():
@@ -155,19 +160,6 @@ def makeMove(move, turn):
 
 def rotateBoard(number, direction):
     global board
-    # 0 1 2   R   6 3 0
-    # 3 4 5       7 4 1
-    # 6 7 8       8 5 2
-    #
-    # 0 1 2 3 4 5 6 7 8
-    # 6 3 0 7 4 1 8 5 3
-    #
-    # 0 1 2   L   2 5 8
-    # 3 4 5       1 4 7
-    # 6 7 8       0 3 6
-    #
-    # 0 1 2 3 4 5 6 7 8
-    # 2 5 8 1 4 6 0 3 6
     start = board[number]
     end = []
     #Right, CW
@@ -219,16 +211,15 @@ def main():
     while(game_end == False):
         printBoard()
         if (turn == False):
-            node0 = node(board, "0/0 1n", 0)
-            makeMove(node0.determineMove(), turn)
-            print "Maximillion moved", node0.determineMove()
+            node0 = node(board, "0/0 1n", 0, turn, None)
+            moveToMake = node0.minimaxMove()
+            makeMove(moveToMake, turn)
+            print "Maximillion moved", moveToMake
             turn = not turn
         else:
             nextMove = raw_input("What would you like to do? ")
             if (nextMove.lower() == "exit" or nextMove.lower() == "end"):
                 sys.exit("Bye Bye")
-            if(nextMove.lower() == "test"):
-                node0 = node(board, "2/4 3n", 0)
             if (nextMove.lower() == "debug"):
                 makeMove("1/6 4n", False)
                 makeMove("1/5 4n", False)
