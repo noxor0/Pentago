@@ -1,6 +1,7 @@
 import sys
 import re
 import os
+from random import randint
 from copy import deepcopy
 intro = """Hello! Welcome to Pentago.
 Move command: board/space board rotation.
@@ -15,26 +16,52 @@ for z in range(4):
 class node():
     def __init__(self, theBoardState, theMove, theLevel, theTurn, theParent):
         self.boardState = list(theBoardState)
-        self.value = 1
-        self.turn = theTurn
         self.move = theMove
+        self.turn = theTurn
+        self.value = None
         self.level = theLevel
         self.parent = theParent
         self.nextTurns = []
         self.nextNodes = []
-        if (self.level < 1):
+        if (self.level < 2):
             self.getNext()
         else:
-            self.value = self.heuristic()
+            self.value = self.randomH()
 
     def determineMove(self):
-        idealValue = self.minimaxMove()
-        return idealValue
+        idealValue = self.minimaxMove(self)
+        # print idealValue.boardState, idealValue.value
+        # print self.nextNodes[0].value, self.nextNodes[0].move
+        for nodeN in self.nextNodes:
+            print nodeN.move
+        for nodeN in self.nextNodes:
+            if(nodeN.value == idealValue.value):
+                return nodeN.move
 
-    def minimaxMove(self):
-        # https://en.wikipedia.org/wiki/Minimax
-        if (self.level == 0):
-            return self
+    def minimaxMove(self, theNode):
+        if (not theNode.nextNodes):
+            return theNode
+        if (theNode.turn == True):
+            bestNode = theNode.nextNodes[0]
+            for nodeN in theNode.nextNodes:
+                v = theNode.minimaxMove(nodeN)
+                if(theNode.value == None):
+                    theNode.value = -10000
+                theNode.value = max(nodeN.value, theNode.value)
+            theNode.value = bestNode.value
+            return bestNode
+        else:
+            bestNode = theNode.nextNodes[0]
+            for nodeN in theNode.nextNodes:
+                v = theNode.minimaxMove(nodeN)
+                if(theNode.value == None):
+                    theNode.value = 10000
+                theNode.value = min(nodeN.value, theNode.value)
+            theNode.value = int(bestNode.value)
+            return bestNode
+
+    def randomH(self):
+        return randint(0,15)
 
     def heuristic(self):
         score = 0
@@ -59,6 +86,11 @@ class node():
                             pos3InRow += direction
                             if (pos3InRow > 8 or pos3InRow < 0):
                                 break
+                            if (count == 2):
+                                if (turnSymbol == 'b'):
+                                    score += 2
+                                else:
+                                    score += -2
                             if (count == 3):
                                 if (turnSymbol == 'b'):
                                     score += 10
@@ -212,7 +244,7 @@ def main():
         printBoard()
         if (turn == False):
             node0 = node(board, "0/0 1n", 0, turn, None)
-            moveToMake = node0.minimaxMove()
+            moveToMake = node0.determineMove()
             makeMove(moveToMake, turn)
             print "Maximillion moved", moveToMake
             turn = not turn
@@ -233,7 +265,7 @@ def main():
                 moveValid = makeMove(nextMove, turn)
                 if (moveValid == True):
                     turn = not turn
-                    os.system('clear')
+                    # os.system('clear')
                 else:
                     nextMove = raw_input("Error, try again: ")
         game_end = checkForEnd()
