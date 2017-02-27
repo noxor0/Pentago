@@ -7,6 +7,7 @@ intro = """Hello! Welcome to Pentago.
 Move command: board/space board rotation.
 Like this 3/1 3r\n"""
 
+useAB = False
 board = [[], [], [], []]
 #just used for printing - DONT FORGET THIS AGAIN
 boardTotal = []
@@ -14,55 +15,55 @@ for z in range(4):
     board[z] = ['.' for x in range(9)]
 
 class node():
-    def __init__(self, theBoardState, theMove, theLevel, theTurn, theParent):
+    def __init__(self, theBoardState, theMove, theLevel, theTurn):
+        global useAB
         self.boardState = list(theBoardState)
         self.move = theMove
         self.turn = theTurn
         self.value = None
         self.level = theLevel
-        self.parent = theParent
         self.nextTurns = []
         self.nextNodes = []
         if (self.level < 2):
-            self.getNext()
+            self.getNext(useAB)
         else:
             self.value = self.randomH()
 
+    #Determines the best move based on the tree created
     def determineMove(self):
-        idealValue = self.minimaxMove(self)
-        # print idealValue.boardState, idealValue.value
-        # print self.nextNodes[0].value, self.nextNodes[0].move
         for nodeN in self.nextNodes:
-            print nodeN.move
-        for nodeN in self.nextNodes:
-            if(nodeN.value == idealValue.value):
+            if (nodeN.value == self.value):
                 return nodeN.move
 
-    def minimaxMove(self, theNode):
-        if (not theNode.nextNodes):
-            return theNode
-        if (theNode.turn == True):
-            bestNode = theNode.nextNodes[0]
-            for nodeN in theNode.nextNodes:
-                v = theNode.minimaxMove(nodeN)
-                if(theNode.value == None):
-                    theNode.value = -10000
-                theNode.value = max(nodeN.value, theNode.value)
-            theNode.value = bestNode.value
-            return bestNode
-        else:
-            bestNode = theNode.nextNodes[0]
-            for nodeN in theNode.nextNodes:
-                v = theNode.minimaxMove(nodeN)
-                if(theNode.value == None):
-                    theNode.value = 10000
-                theNode.value = min(nodeN.value, theNode.value)
-            theNode.value = int(bestNode.value)
-            return bestNode
+    #Runs a direct minimax algorithm on a tree with utility values on the terminal
+    #nodes.
+    # def minimaxMove(self, theNode):
+        # if (not theNode.nextNodes):
+        #     return theNode
+        # if (theNode.turn == True):
+        #     bestNode = theNode.nextNodes[0]
+        #     for nodeN in theNode.nextNodes:
+        #         v = theNode.minimaxMove(nodeN)
+        #         if(theNode.value == None):
+        #             theNode.value = -10000
+        #         theNode.value = max(nodeN.value, theNode.value)
+        #     theNode.value = bestNode.value
+        #     return bestNode
+        # else:
+        #     bestNode = theNode.nextNodes[0]
+        #     for nodeN in theNode.nextNodes:
+        #         v = theNode.minimaxMove(nodeN)
+        #         if(theNode.value == None):
+        #             theNode.value = 10000
+        #         theNode.value = min(nodeN.value, theNode.value)
+        #     theNode.value = int(bestNode.value)
+        #     return bestNode
 
+    #a perfect heuristic
     def randomH(self):
-        return randint(0,15)
+        return randint(-100,100)
 
+    #A very bad heuristic that is geared to getting 3 pieces in a row
     def heuristic(self):
         score = 0
         possibleDir = [3, 1, -2, 4]
@@ -98,7 +99,9 @@ class node():
                                     score += -10
         return score
 
-    def getNext(self):
+    #runs all possible turns for all possible directions and invokes creates
+    #all nodes based on what would happen IF the move was taken.
+    def getNext(self, alphabeta):
         rotations = ["1l", "1r", "2l", "2r", "3l", "3r", "4l", "4r",]
         openMoves = []
         for boardNum in range(4):
@@ -110,11 +113,15 @@ class node():
 
         for rotPair in rotations:
             for possMoves in openMoves:
-                self.tempMove(possMoves, rotPair, self.turn)
+                if(alphabeta == False):
+                    self.moveMinMax(possMoves, rotPair, self.turn)
+                else:
+                    self.moveAlphaBeta(possMoves, rotPair, self.turn)
 
-    def tempMove(self, thePlace, theRot, theTurn):
+    #builds the the tree and assigns values to non-terminal leaf nodes based on
+    #the alphabeta pruning algorithm. This simulates a turn on the board.
+    def moveAlphaBeta(self, thePlace, theRot, theTurn):
         theMove = ''.join([thePlace, ' ', theRot])
-        self.move = theMove
         boardCpy = deepcopy(self.boardState)
         #make move
         if (theTurn == False):
@@ -141,8 +148,51 @@ class node():
             boardCpy[int(theRot[0]) - 1][count] = end[count]
 
         if(boardCpy not in self.nextTurns):
-            self.nextNodes.append(node(boardCpy, theMove, self.level+1,
-                                       not self.turn, self))
+            newNode = node(boardCpy, theMove, self.level+1, not self.turn)
+            self.nextNodes.append(newNode)
+            self.nextTurns.append(boardCpy)
+
+    #builds the the tree and assigns values to non-terminal leaf nodes based on
+    #the minimax algorithm. This simulates a turn on the board.
+    def moveMinMax(self, thePlace, theRot, theTurn):
+        theMove = ''.join([thePlace, ' ', theRot])
+        boardCpy = deepcopy(self.boardState)
+        #make move
+        if (theTurn == False):
+            boardCpy[int(thePlace[0]) - 1][int(thePlace[2]) - 1] = 'b'
+        else:
+            boardCpy[int(thePlace[0]) - 1][int(thePlace[2]) - 1] = 'w'
+        #start rotating
+        start = boardCpy[int(theRot[0]) - 1]
+        end = []
+        #Right, CW
+        if (theRot[1] == 'r'):
+            for col in range(3):
+                end.append(start[col + 6])
+                end.append(start[col + 3])
+                end.append(start[col + 0])
+        #Left, CCW
+        if (theRot[1] == 'l'):
+            for col in range(2, -1, -1):
+                end.append(start[col + 0])
+                end.append(start[col + 3])
+                end.append(start[col + 6])
+
+        for count in range(len(end)):
+            boardCpy[int(theRot[0]) - 1][count] = end[count]
+
+        if(boardCpy not in self.nextTurns):
+            newNode = node(boardCpy, theMove, self.level+1, not self.turn)
+            self.nextNodes.append(newNode)
+            if (self.turn == True):
+                    if(self.value == None):
+                        self.value = -10000
+                    self.value = max(newNode.value, self.value)
+            else:
+                    if(self.value == None):
+                        self.value = 10000
+                    self.value = min(newNode.value, self.value)
+
             self.nextTurns.append(boardCpy)
 
 def printBoard():
@@ -228,11 +278,11 @@ def checkForEnd():
                     count += 1
                     prevCol = pos5InRow % 6
                     pos5InRow += direction
+                    if (count == 5):
+                        print "player", turnSymbol, "wins!"
+                        return True
                     if (pos5InRow > 35 or pos5InRow < 0):
                         break
-                    if (count == 5):
-                        print "you win!"
-                        return True
     return False
 
 def main():
@@ -243,7 +293,7 @@ def main():
     while(game_end == False):
         printBoard()
         if (turn == False):
-            node0 = node(board, "0/0 1n", 0, turn, None)
+            node0 = node(board, "0/0 1n", 0, turn)
             moveToMake = node0.determineMove()
             makeMove(moveToMake, turn)
             print "Maximillion moved", moveToMake
@@ -253,12 +303,11 @@ def main():
             if (nextMove.lower() == "exit" or nextMove.lower() == "end"):
                 sys.exit("Bye Bye")
             if (nextMove.lower() == "debug"):
-                makeMove("1/6 4n", False)
-                makeMove("1/5 4n", False)
-                makeMove("2/5 4n", False)
-                makeMove("3/5 4n", True)
-                makeMove("4/5 4n", True)
-                makeMove("4/8 4n", True)
+                makeMove("1/2 4n", True)
+                makeMove("1/6 4n", True)
+                makeMove("2/7 4n", True)
+                makeMove("4/2 4n", True)
+                makeMove("4/6 4n", True)
                 printBoard()
             if (re.match("[1-4]/[1-9] [1-4][rln]", nextMove.lower())):
                 print nextMove
@@ -268,6 +317,7 @@ def main():
                     # os.system('clear')
                 else:
                     nextMove = raw_input("Error, try again: ")
-        game_end = checkForEnd()
+        if (checkForEnd() == True):
+            break
 
 main()
