@@ -35,24 +35,28 @@ class node():
                 if (nodeN.value == self.value):
                     return nodeN.move
         else:
-            alphabeta(origin, depth, -∞, +∞, TRUE)
-            self.alphabeta(self,2, -10000, 10000, True)
+            idealValue = self.alphabeta(self, 2, -10000, 10000, True)
+            for nodeN in self.nextNodes:
+                print nodeN.value
+                if (nodeN.value == idealValue):
+                    return nodeN.move
 
-    def alphabeta(self, node, depth, alpha, beta, maxPlyr):
-        if (depth = 0 or not node.nextNodes):
-            return node
+    def alphabeta(self, nodeT, depth, alpha, beta, maxPlyr):
+        if (depth == 0 or not nodeT.nextNodes):
+            return nodeT.value
         if (maxPlyr == True):
             v = -10000
-            for nodeN in node.nextNodes:
-                v = max(v, alphabeta(nodeN, depth-1, alpha, beta, False))
+            for nodeN in nodeT.nextNodes:
+                v = max(v, self.alphabeta(nodeN, depth-1, alpha, beta, False))
                 alpha = max(alpha, v)
+                self.value = alpha
                 if (beta <= alpha):
                     break
             return v
         else:
             v = 10000
-            for nodeN in node.nextNodes:
-                v = min(v, alphabeta(nodeN, depth-1, alpha, beta, False))
+            for nodeN in nodeT.nextNodes:
+                v = min(v, self.alphabeta(nodeN, depth-1, alpha, beta, True))
                 beta = min(beta, v)
                 if (beta <= alpha):
                     break
