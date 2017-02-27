@@ -7,7 +7,7 @@ intro = """Hello! Welcome to Pentago.
 Move command: board/space board rotation.
 Like this 3/1 3r\n"""
 
-useAB = False
+useAB = True
 board = [[], [], [], []]
 #just used for printing - DONT FORGET THIS AGAIN
 boardTotal = []
@@ -16,7 +16,6 @@ for z in range(4):
 
 class node():
     def __init__(self, theBoardState, theMove, theLevel, theTurn):
-        global useAB
         self.boardState = list(theBoardState)
         self.move = theMove
         self.turn = theTurn
@@ -25,39 +24,39 @@ class node():
         self.nextTurns = []
         self.nextNodes = []
         if (self.level < 2):
-            self.getNext(useAB)
+            self.getNext()
         else:
             self.value = self.randomH()
 
     #Determines the best move based on the tree created
     def determineMove(self):
-        for nodeN in self.nextNodes:
-            if (nodeN.value == self.value):
-                return nodeN.move
+        if(useAB == False):
+            for nodeN in self.nextNodes:
+                if (nodeN.value == self.value):
+                    return nodeN.move
+        else:
+            alphabeta(origin, depth, -∞, +∞, TRUE)
+            self.alphabeta(self,2, -10000, 10000, True)
 
-    #Runs a direct minimax algorithm on a tree with utility values on the terminal
-    #nodes.
-    # def minimaxMove(self, theNode):
-        # if (not theNode.nextNodes):
-        #     return theNode
-        # if (theNode.turn == True):
-        #     bestNode = theNode.nextNodes[0]
-        #     for nodeN in theNode.nextNodes:
-        #         v = theNode.minimaxMove(nodeN)
-        #         if(theNode.value == None):
-        #             theNode.value = -10000
-        #         theNode.value = max(nodeN.value, theNode.value)
-        #     theNode.value = bestNode.value
-        #     return bestNode
-        # else:
-        #     bestNode = theNode.nextNodes[0]
-        #     for nodeN in theNode.nextNodes:
-        #         v = theNode.minimaxMove(nodeN)
-        #         if(theNode.value == None):
-        #             theNode.value = 10000
-        #         theNode.value = min(nodeN.value, theNode.value)
-        #     theNode.value = int(bestNode.value)
-        #     return bestNode
+    def alphabeta(self, node, depth, alpha, beta, maxPlyr):
+        if (depth = 0 or not node.nextNodes):
+            return node
+        if (maxPlyr == True):
+            v = -10000
+            for nodeN in node.nextNodes:
+                v = max(v, alphabeta(nodeN, depth-1, alpha, beta, False))
+                alpha = max(alpha, v)
+                if (beta <= alpha):
+                    break
+            return v
+        else:
+            v = 10000
+            for nodeN in node.nextNodes:
+                v = min(v, alphabeta(nodeN, depth-1, alpha, beta, False))
+                beta = min(beta, v)
+                if (beta <= alpha):
+                    break
+            return v
 
     #a perfect heuristic
     def randomH(self):
@@ -101,7 +100,8 @@ class node():
 
     #runs all possible turns for all possible directions and invokes creates
     #all nodes based on what would happen IF the move was taken.
-    def getNext(self, alphabeta):
+    def getNext(self):
+        global useAB
         rotations = ["1l", "1r", "2l", "2r", "3l", "3r", "4l", "4r",]
         openMoves = []
         for boardNum in range(4):
@@ -113,7 +113,7 @@ class node():
 
         for rotPair in rotations:
             for possMoves in openMoves:
-                if(alphabeta == False):
+                if(useAB == False):
                     self.moveMinMax(possMoves, rotPair, self.turn)
                 else:
                     self.moveAlphaBeta(possMoves, rotPair, self.turn)
