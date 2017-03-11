@@ -3,11 +3,11 @@ import re
 import os
 from random import randint
 from copy import deepcopy
+
 intro = """Hello! Welcome to Pentago.
 Move command: board/space board rotation.
 Like this 3/1 3r\n"""
-
-useAB = True
+useAB = False
 board = [[], [], [], []]
 #just used for printing - DONT FORGET THIS AGAIN
 boardTotal = []
@@ -15,52 +15,44 @@ for z in range(4):
     board[z] = ['.' for x in range(9)]
 
 class node():
-    def __init__(self, theBoardState, theMove, theLevel, theTurn):
+    def __init__(self, theBoardState, theMove, theLevel, theTurn, theParent):
+        global useAB
         self.boardState = list(theBoardState)
+        self.parent = theParent
+        self.depth = None
+        if (self.parent == None):
+            self.depth = 0
+        else:
+            self.depth = self.parent.depth + 1
         self.move = theMove
         self.turn = theTurn
         self.value = None
         self.level = theLevel
         self.nextTurns = []
         self.nextNodes = []
-        if (self.level < 2):
-            self.getNext()
+        self.alpha = -1000
+        self.beta = 1000
+        if (useAB == True):
+            if (self.level < 2):
+                self.getNextAB()
+            else:
+                self.value = self.randomH()
+                if (self.turn == True):
+                    self.alpha = self.value
+                else:
+                    self.beta = self.value
         else:
-            self.value = self.randomH()
+            if (self.level < 2):
+                self.getNext()
+            else:
+                self.value = self.randomH()
 
     #Determines the best move based on the tree created
     def determineMove(self):
-        if(useAB == False):
-            for nodeN in self.nextNodes:
-                if (nodeN.value == self.value):
-                    return nodeN.move
-        else:
-            idealValue = self.alphabeta(self, 2, -10000, 10000, True)
-            for nodeN in self.nextNodes:
-                print nodeN.value
-                if (nodeN.value == idealValue):
-                    return nodeN.move
-
-    def alphabeta(self, nodeT, depth, alpha, beta, maxPlyr):
-        if (depth == 0 or not nodeT.nextNodes):
-            return nodeT.value
-        if (maxPlyr == True):
-            v = -10000
-            for nodeN in nodeT.nextNodes:
-                v = max(v, self.alphabeta(nodeN, depth-1, alpha, beta, False))
-                alpha = max(alpha, v)
-                self.value = alpha
-                if (beta <= alpha):
-                    break
-            return v
-        else:
-            v = 10000
-            for nodeN in nodeT.nextNodes:
-                v = min(v, self.alphabeta(nodeN, depth-1, alpha, beta, True))
-                beta = min(beta, v)
-                if (beta <= alpha):
-                    break
-            return v
+        for nodeN in self.nextNodes:
+            print nodeN.alpha, nodeN.beta
+            if (nodeN.value == self.value):
+                return nodeN.move
 
     #a perfect heuristic
     def randomH(self):
@@ -105,7 +97,6 @@ class node():
     #runs all possible turns for all possible directions and invokes creates
     #all nodes based on what would happen IF the move was taken.
     def getNext(self):
-        global useAB
         rotations = ["1l", "1r", "2l", "2r", "3l", "3r", "4l", "4r",]
         openMoves = []
         for boardNum in range(4):
@@ -117,10 +108,21 @@ class node():
 
         for rotPair in rotations:
             for possMoves in openMoves:
-                if(useAB == False):
-                    self.moveMinMax(possMoves, rotPair, self.turn)
-                else:
-                    self.moveAlphaBeta(possMoves, rotPair, self.turn)
+                self.moveMinMax(possMoves, rotPair, self.turn)
+
+    def getNextAB(self):
+        rotations = ["1l", "1r", "2l", "2r", "3l", "3r", "4l", "4r",]
+        openMoves = []
+        for boardNum in range(4):
+            for spot in range(9):
+                if (self.boardState[boardNum][spot] == '.'):
+                    boardNumStr = str(boardNum + 1)
+                    spotStr = str(spot + 1)
+                    openMoves.append(''.join([boardNumStr, '/' ,spotStr]))
+
+        for rotPair in rotations:
+            for possMoves in openMoves:
+                self.moveAlphaBeta(possMoves, rotPair, self.turn)
 
     #builds the the tree and assigns values to non-terminal leaf nodes based on
     #the alphabeta pruning algorithm. This simulates a turn on the board.
@@ -152,7 +154,14 @@ class node():
             boardCpy[int(theRot[0]) - 1][count] = end[count]
 
         if(boardCpy not in self.nextTurns):
-            newNode = node(boardCpy, theMove, self.level+1, not self.turn)
+            newNode = node(boardCpy, theMove, self.level+1, not self.turn, self)
+            if (self.depth < 2):
+                if (self.turn == True):
+                    if (self.alpha < newNode.beta):
+                        self.alpha = newNode.beta
+                else:
+                    if(self.beta < newNode.alpha):
+                        self.beta = newNode.alpha
             self.nextNodes.append(newNode)
             self.nextTurns.append(boardCpy)
 
@@ -186,17 +195,8 @@ class node():
             boardCpy[int(theRot[0]) - 1][count] = end[count]
 
         if(boardCpy not in self.nextTurns):
-            newNode = node(boardCpy, theMove, self.level+1, not self.turn)
+            newNode = node(boardCpy, theMove, self.level+1, not self.turn, self)
             self.nextNodes.append(newNode)
-            if (self.turn == True):
-                    if(self.value == None):
-                        self.value = -10000
-                    self.value = max(newNode.value, self.value)
-            else:
-                    if(self.value == None):
-                        self.value = 10000
-                    self.value = min(newNode.value, self.value)
-
             self.nextTurns.append(boardCpy)
 
 def printBoard():
@@ -297,7 +297,7 @@ def main():
     while(game_end == False):
         printBoard()
         if (turn == False):
-            node0 = node(board, "0/0 1n", 0, turn)
+            node0 = node(board, "0/0 1n", 0, turn, None)
             moveToMake = node0.determineMove()
             makeMove(moveToMake, turn)
             print "Maximillion moved", moveToMake
