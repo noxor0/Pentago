@@ -1,0 +1,12 @@
+New Game-------- 
+Player 1: Bob goes second (B)
+Player 2: Maximillion goes first (W)
+Maximillion moved1/5 1l
+Bob moved: 1/4 2r
+Maximillion moved1/6 1l
+Bob moved: 3/2 3r
+Maximillion moved1/6 1r
+Bob moved: 1/2 3r
+Maximillion moved3/5 1l
+Bob moved: 4/1 2r
+Maximillion moved3/6 3l

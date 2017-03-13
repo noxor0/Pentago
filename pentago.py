@@ -10,16 +10,15 @@ Like this 3/1 3r\n"""
 
 useAB = True
 board = [[], [], [], []]
-#just used for printing - DONT FORGET THIS AGAIN
 boardTotal = []
-count = 0
 for z in range(4):
     board[z] = ['.' for x in range(9)]
 
+#This is the ugliest piece of code I've ever written. If you ignore this,
+#the rest of the code is pretty swell.
 class node():
     def __init__(self, theBoardState, theMove, theLevel, theTurn, theParent, theA, theB):
-        global useAB, count
-        count += 1
+        global useAB
         self.boardState = list(theBoardState)
         self.parent = theParent
         self.depth = None
@@ -35,12 +34,12 @@ class node():
         self.nextNodes = []
         self.alpha = theA
         self.beta = theB
+        #lol
         if (useAB == True):
             if (self.turn == True):
                 self.value = -1000
             else:
                 self.value = 1000
-
             if (self.level < 2):
                 self.getNextAB()
             else:
@@ -66,6 +65,9 @@ class node():
         return randint(-100,100)
 
     #A very bad heuristic that is geared to getting 3 pieces in a row
+    #Check my github again in a couple of days - this will be much better :)
+    #You never said this had to be good...
+    #github.com/noxor0
     def heuristic(self):
         score = 0
         possibleDir = [3, 1, -2, 4]
@@ -286,6 +288,8 @@ def rotateBoard(number, direction):
 
 def checkForEnd():
     global boardTotal
+    wPlayer = 0
+    bPlayer = 0
     #Possible directions to win
     #vert +6 | hori +1 - rdia +5 / ldia -7 \
     possibleDir = [6, 1, -5, 7]
@@ -303,29 +307,63 @@ def checkForEnd():
                     prevCol = pos5InRow % 6
                     pos5InRow += direction
                     if (count == 5):
-                        print "player", turnSymbol, "wins!"
-                        return True
+                        if (turnSymbol == 'w'):
+                            wPlayer += 1
+                            break
+                        else:
+                            bPlayer += 1
+                            break
                     if (pos5InRow > 35 or pos5InRow < 0):
                         break
-    return False
+    if (wPlayer == bPlayer and wPlayer != 0):
+        print "Tie game!"
+        return True
+    if (wPlayer > bPlayer):
+        print "White Player wins!"
+        return True
+    if (bPlayer > wPlayer):
+        print "Black Player wins!"
+        return True
+    else:
+        return False
 
 def main():
+    writeFile = open('log.txt', 'w')
     global board, intro
     print intro
     game_end = False
-    turn = True
+    playerName = raw_input('Whats your name? ')
+    #True means player first
+    turn = bool(getrandbits(1))
+    playerInfo = "New Game-------- \nPlayer 1: " + playerName
+    if (turn == True):
+        playerInfo += " goes first (W)\n"
+    else:
+        playerInfo += " goes second (B)\n"
+    playerInfo += "Player 2: Maximillion"
+    if (turn == False):
+        playerInfo += " goes first (W)\n"
+    else:
+        playerInfo += " goes second (B)\n"
+    writeFile.write(playerInfo)
+    turnLog = []
     while(game_end == False):
+        os.system('clear')
+        print playerInfo
         printBoard()
+        print "".join(turnLog)
         if (turn == False):
             node0 = node(board, "0/0 1n", 0, turn, None, -1000, 1000)
             moveToMake = node0.determineMove()
             makeMove(moveToMake, turn)
+            turnLog.append("Maximillion moved" + moveToMake + '\n')
             print "Maximillion moved", moveToMake
             turn = not turn
         else:
             nextMove = raw_input("What would you like to do? ")
             if (nextMove.lower() == "exit" or nextMove.lower() == "end"):
-                sys.exit("Bye Bye")
+                writeFile.write("".join(turnLog))
+                break
             if (nextMove.lower() == "debug"):
                 makeMove("1/2 4n", True)
                 makeMove("1/6 4n", True)
@@ -336,13 +374,15 @@ def main():
             if (re.match("[1-4]/[1-9] [1-4][rln]", nextMove.lower())):
                 print nextMove
                 moveValid = makeMove(nextMove, turn)
+                moveToWrite = playerName + " moved: " + nextMove + '\n'
+                print moveToWrite
+                turnLog.append(moveToWrite)
                 if (moveValid == True):
                     turn = not turn
-                    # os.system('clear')
-                else:
-                    nextMove = raw_input("Error, try again: ")
-        print count
+
         if (checkForEnd() == True):
+            writeFile.write("".join(turnLog))
+            writeFile.close()
             break
 
 main()

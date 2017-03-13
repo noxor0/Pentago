@@ -1,5 +1,13 @@
 #Pentago with AI
-
+-Info
 A reconstruction of the popular board game, Pentago
-
 Has an AI that uses Alpha-Beta pruning on a Minimax tree  to chose the best step.
+
+-Alphabeta
+Okay, my alphabeta / node class is really messy. It was a cascading mistake.
+I originally had a very clean solution to this, but it didnt work perfectly. From then on, everything I tried to fix seemed to make it worse. Oops.
+
+-Heuristic
+Currently have the best heuristic selected: Random
+Its impossible to predict, and incredibly quick. I believe it is the most optomized and efficient solution
+I do, unfortunately, have another heuristic. It is not as good as the former, but it works. I believe that the user should always win - so thats what this heurstic does.
